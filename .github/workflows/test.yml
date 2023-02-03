@@ -30,3 +30,4 @@ jobs:
       run: python -m pytest test_synapse_sinkdb.py
       env:
         SYNAPSE_SINKDB_APIKEY: ${{ secrets.SYNAPSE_SINKDB_APIKEY }}
+        SYNAPSE_SINKDB_DATA: ${{ secrets.SYNAPSE_SINKDB_DATA }}

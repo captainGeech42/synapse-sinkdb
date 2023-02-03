@@ -1,0 +1,67 @@
+name: zw-sinkdb
+version: 0.1.0
+synapse_minversion: [2, 117, 0]
+desc: The zw-sinkdb package provides commands to ingest and model data from SinkDB (sinkdb.abuse.ch).
+
+author:
+  url: https://zanderwork.com/
+  name: Zander Work
+
+genopts:
+  dotstorm: true
+
+perms:
+  - perm: [power-ups, zw, sinkdb, user]
+    desc: Allows a user to lookup indicators on SinkDB
+    gate: cortex
+  - perm: [power-ups, zw, sinkdb, admin]
+    desc: Allows a user to bulk import the listable IOCs on SinkDB
+    gate: cortex
+
+modules:
+  - name: zw.sinkdb.api
+  - name: zw.sinkdb.setup
+  # - name: zw.sinkdb.privsep
+    modconf:
+      source: a9fc8fc6af73f0bf2dda26961f50cfe6
+    asroot:perms:
+      - [power-ups, zw, sinkdb, user]
+
+commands:
+  - name: zw.sinkdb.setup.apikey
+    descr: Set the SinkDB HTTPS API key
+    perms:
+      - [power-ups, zw, sinkdb, user]
+    cmdargs:
+      - - apikey
+        - type: str
+          help: The SinkDB HTTPS API key
+      - - --self
+        - type: bool
+          default: false
+          action: store_true
+          help: Set the key as a user variable. If not used, the key is set globally.
+
+  - name: zw.sinkdb.lookup
+    descr: Lookup an indicator on SinkDB
+    perms:
+      - [power-ups, zw, sinkdb, user]
+    forms:
+      input:
+        - inet:email
+        - inet:fqdn
+        - inet:ipv4
+      output:
+        - inet:email
+        - inet:fqdn
+        - inet:ipv4
+
+  - name: zw.sinkdb.import
+    descr: Import the listable indicators on SinkDB
+    perms:
+      - [power-ups, zw, sinkdb, admin]
+    forms:
+      output:
+        - inet:email
+        - inet:fqdn
+        - inet:ipv4

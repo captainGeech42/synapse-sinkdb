@@ -1,0 +1,4 @@
+__pycache__
+.pytest_cache
+synapse_sinkdb.json
+sinkdb_data.json

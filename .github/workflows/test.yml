@@ -8,7 +8,15 @@ on:
       - "**"
     branches:
       - "**"
+    paths:
+      - "**/*.storm"
+      - "test_synapse_sinkdb.py"
+      - "synapse-sinkdb.yaml"
   pull_request:
+    paths:
+      - "**/*.storm"
+      - "test_synapse_sinkdb.py"
+      - "synapse-sinkdb.yaml"
   workflow_dispatch:
 
 jobs:

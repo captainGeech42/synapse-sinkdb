@@ -62,13 +62,21 @@ function setTagPrefix(prefix) {
 // Args
 //   - $querystr (str): Query string to append to the POST body (which this function will add the API key to)
 // Returns: prim (JSON dictionary) or $lib.false
-function makeSinkdbApiCall(querystr) {
+function makeSinkdbApiCall(querystr, asof) {
+    $cachedData = $lib.jsonstor.cacheget("zw.sinkdb.http", $querystr, $asof)
+    if ($cachedData) {
+        if $lib.debug { $lib.print("using cached data for http query: {s}", s=$querystr) }
+        return($cachedData)
+    }
+
     $body = $lib.str.format("api_key={k}&{b}", k=$getApiKey(), b=$querystr)
 
     $resp = $lib.inet.http.post("https://sinkdb-api.abuse.ch/api/v1/", headers=({"content-type": "application/x-www-form-urlencoded"}), body=$body)
     if ($resp.code != 200) { return($lib.false) }
 
     $j = $resp.json()
+    $ret = $lib.jsonstor.cacheset("zw.sinkdb.http", $querystr, $j)
+    if $lib.debug { $lib.print("wrote http query cache data for {s}: {r}", s=$querystr, r=$ret) }
 
     return($j)
 }
@@ -85,7 +93,7 @@ function getMetaSource() {
 // Args:
 //   - $node: node to model tags on
 //   - $data: dict of data from SinkDB
-// Returns: none
+// Returns: n/a
 function modelLookupResponse(node, data) {
     ($ok_s, $src) = $lib.trycast(syn:tag:part, $data.source)
     ($ok_c, $class) = $lib.trycast(syn:tag:part, $data.classification)
@@ -124,6 +132,10 @@ function modelLookupResponse(node, data) {
     fini { return() }
 }
 
+// Model the exported data from SinkDB. Creates nodes.
+// Args:
+//   - $data: dict of data from SinkDB
+// Returns: n/a
 function modelExportResponse(data) {
     for $d in $data {
         switch $d.type {

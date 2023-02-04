@@ -120,6 +120,22 @@ class SynapseSinkdbTest(s_test.SynTest):
             self.stormIsInPrint("tag prefix to #new.asdf", msgs)
             await self._t_check_lookup_type(core, "domain_soa", ["class.listed", "expose.vendor", "has_operator", "sinkhole", "type.domain_soa"], prefix="new.asdf")
 
+    async def test_cache(self):
+        self.skipIfNoInternet()
+
+        async with self.getTestCore() as core:
+            await self._t_install_pkg(core)
+            await self._t_seed_cortex(core)
+
+            msgs = await core.stormlist("#test.nameserver | zw.sinkdb.lookup --debug")
+            self.stormIsInPrint("wrote http query cache data", msgs)
+            
+            msgs = await core.stormlist("#test.nameserver | zw.sinkdb.lookup --debug")
+            self.stormIsInPrint("using cached data for http query", msgs)
+            
+            msgs = await core.stormlist("#test.nameserver | zw.sinkdb.lookup --debug --asof now")
+            self.stormIsInPrint("wrote http query cache data", msgs)
+
     async def test_import(self):
         self.skipIfNoInternet()
         

@@ -54,6 +54,16 @@ commands:
     descr: Lookup an indicator on SinkDB
     perms:
       - [zw, sinkdb, user]
+    cmdargs:
+      - - --asof
+        - type: str
+          default: -30days
+          help: Specify the maximum age for a cached result. To disable caching, use --asof now.
+      - - --debug
+        - type: bool
+          default: false
+          action: store_true
+          help: Show verbose debug output.
     forms:
       input:
         - inet:email
@@ -77,6 +87,15 @@ commands:
         - inet:url
         - it:dev:str
     cmdargs:
+      - - --asof
+        - type: str
+          default: -30days
+          help: Specify the maximum age for a cached result. To disable caching, use --asof now.
+      - - --debug
+        - type: bool
+          default: false
+          action: store_true
+          help: Show verbose debug output.
       - - --no-awareness
         - type: bool
           default: false

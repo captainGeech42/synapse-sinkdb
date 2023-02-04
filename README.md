@@ -57,6 +57,8 @@ You can also bulk import the `listed` indicators from SinkDB:
 storm> zw.sinkdb.import
 ```
 
+By default, `lookup` and `import` use a 30 day cache window. To override this, use the `--asof` flag. To ignore the cached data, specify `--asof now`.
+
 For more details, please run `help zw.sinkdb`.
 
 ### Optic
@@ -125,5 +127,4 @@ $ SYNAPSE_SINKDB_APIKEY=asdf SYNAPSE_SINKDB_DATA_PATH=sinkdb_data.json python -m
 ## TODO:
 
 * `ps:contact` modeling to track the sinkholer
-* [jsonstor caching](https://synapse.docs.vertex.link/en/latest/synapse/devguides/power-ups.html#command-option-conventions)
 * sign the powerup

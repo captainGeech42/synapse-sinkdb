@@ -1,12 +1,12 @@
-$privsep = $lib.import(zw.sinkdb.privsep)
+$privsep = $lib.import(zw.sinkdb.privsep, debug=$lib.debug)
 
 // (MODULE INTERNAL ONLY)
 // Make a lookup request to SinkDB
 // Args
 //   - $querystr (str): Query string to append to the POST body (which this function will add the API key to)
 // Returns: dict of results or $lib.false on failure
-function __makeLookupRequest(query) {
-    $resp = $privsep.makeSinkdbApiCall($query)
+function __makeLookupRequest(query, asof) {
+    $resp = $privsep.makeSinkdbApiCall($query, $asof)
 
     if ($resp and $resp.query_status = "ok") {
         return($resp.results)
@@ -17,28 +17,29 @@ function __makeLookupRequest(query) {
 }
 
 // Make a lookup against SinkDB for an IPv4 address
-function lookupIpv4(ip) {
+function lookupIpv4(ip, asof) {
     $query = $lib.str.format("ipv4={ip}", ip=$ip)
-    return($__makeLookupRequest($query))
+    return($__makeLookupRequest($query, $asof))
 }
 
 // Make a lookup against SinkDB for a domain
-function lookupFqdn(fqdn) {
+function lookupFqdn(fqdn, asof) {
+    $lib.print($lib.debug)
     $query = $lib.str.format("domain={fqdn}", fqdn=$fqdn)
-    return($__makeLookupRequest($query))
+    return($__makeLookupRequest($query, $asof))
 }
 
 // Make a lookup against SinkDB for an email addr 
-function lookupEmail(email) {
+function lookupEmail(email, asof) {
     $query = $lib.str.format("email={email}", email=$email) 
-    return($__makeLookupRequest($query))
+    return($__makeLookupRequest($query, $asof))
 }
 
 // Make an export request to SinkDB
 // Args
 //   - category (str): what category of data to export (sinkholes, awareness, or scanners)
 // Returns: dict of results or $lib.false on failure
-function exportIndicators(category) {
+function exportIndicators(category, asof) {
     $query = $lib.str.format("export={category}", category=$category) 
-    return($__makeLookupRequest($query))
+    return($__makeLookupRequest($query, $asof))
 }

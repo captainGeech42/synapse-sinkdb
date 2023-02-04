@@ -1,11 +1,11 @@
 init {
-    $api = $lib.import(zw.sinkdb.api)
-    $privsep = $lib.import(zw.sinkdb.privsep)
-
     if $cmdopts.debug { $lib.debug = $lib.true }
-    
+
+    $api = $lib.import(zw.sinkdb.api, debug=$lib.debug)
+    $privsep = $lib.import(zw.sinkdb.privsep, debug=$lib.debug)
+
     if (not $cmdopts.no_awareness) {
-        $data = $api.exportIndicators(awareness)
+        $data = $api.exportIndicators(awareness, $cmdopts.asof)
         if (not $data) {
             $lib.warn("failed to get awareness data from sinkdb")
         }
@@ -13,7 +13,7 @@ init {
     }
 
     if (not $cmdopts.no_scanners) {
-        $data = $api.exportIndicators(scanners)
+        $data = $api.exportIndicators(scanners, $cmdopts.asof)
         if (not $data) {
             $lib.warn("failed to get scanner data from sinkdb")
         }
@@ -21,7 +21,7 @@ init {
     }
 
     if (not $cmdopts.no_sinkhole) {
-        $data = $api.exportIndicators(sinkholes)
+        $data = $api.exportIndicators(sinkholes, $cmdopts.asof)
         if (not $data) {
             $lib.warn("failed to get sinkhole data from sinkdb")
         }

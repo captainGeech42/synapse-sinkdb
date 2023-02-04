@@ -55,8 +55,11 @@ You can also bulk import the `listed` indicators from SinkDB:
 
 ```
 storm> zw.sinkdb.import
-Modeled 467 results from SinkDB
-complete. 0 nodes in 4791 ms (0/sec).
+Modeled 445 results from SinkDB
+complete. 0 nodes in 4412 ms (0/sec).
+storm> #rep.sinkdb | count
+Counted 825 nodes.
+complete. 0 nodes in 53 ms (0/sec).
 ```
 
 By default, `lookup` and `import` use a 30 day cache window. To override this, use the `--asof` flag. To ignore the cached data, specify `--asof now`.
@@ -75,6 +78,8 @@ This package exposes two permissions:
 
 * `zw.sinkdb.user`: Intended for general analyst use, allows the invocation of `zw.sinkdb.lookup`
 * `zw.sinkdb.admin`: Intended for administrative/automation use, allows the invocation of `zw.sinkdb.import` and changing of global configuration items
+
+This package uses a `meta:source` node with the GUID `a9fc8fc6af73f0bf2dda26961f50cfe6`. All observed nodes are edged with `seen` to the `meta:source`.
 
 ## Tag Tree
 
@@ -125,8 +130,3 @@ This can be stored on disk and provided as a filepath in `$SYNAPSE_SINKDB_DATA_P
 $ pip install -r requirements.txt
 $ SYNAPSE_SINKDB_APIKEY=asdf SYNAPSE_SINKDB_DATA_PATH=sinkdb_data.json python -m pytest test_synapse_sinkdb.py
 ```
-
-## TODO:
-
-* `ps:contact` modeling to track the sinkholer
-* sign the powerup

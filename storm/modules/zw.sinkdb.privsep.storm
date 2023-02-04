@@ -97,17 +97,17 @@ function getMetaSource() {
 function modelLookupResponse(node, data) {
     ($ok, $src) = $lib.trycast(syn:tag:part, $data.source)
     if (not $ok) {
-        $lib.warn("failed to model {ioc}, couldn't norm {d}", ioc=$data.indicator, d=$data.source)
+        $lib.warn("failed to model {ioc}, couldn't norm source: {d}", ioc=$data.indicator, d=$data.source)
         return()
     }
     ($ok, $class) = $lib.trycast(syn:tag:part, $data.classification)
     if (not $ok) {
-        $lib.warn("failed to model {ioc}, couldn't norm {d}", ioc=$data.indicator, d=$data.classification)
+        $lib.warn("failed to model {ioc}, couldn't norm classification: {d}", ioc=$data.indicator, d=$data.classification)
         return()
     }
     ($ok, $type) = $lib.trycast(syn:tag:part, $data.type)
     if (not $ok) {
-        $lib.warn("failed to model {ioc}, couldn't norm {d}", ioc=$data.indicator, d=$data.type)
+        $lib.warn("failed to model {ioc}, couldn't norm type: {d}", ioc=$data.indicator, d=$data.type)
         return()
     }
     

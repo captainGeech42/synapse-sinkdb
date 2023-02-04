@@ -158,21 +158,26 @@ class SynapseSinkdbTest(s_test.SynTest):
             self.stormIsInPrint("importing sinkhole indicators", msgs)
             self.stormNotInPrint("importing awareness indicators", msgs)
             self.stormNotInPrint("importing scanner indicators", msgs)
+            self.stormHasNoWarnErr(msgs)
 
             msgs = await core.stormlist("zw.sinkdb.import --debug --no-awareness --no-sinkholes")
             self.stormIsInPrint("results from SinkDB", msgs)
             self.stormNotInPrint("importing sinkhole indicators", msgs)
             self.stormNotInPrint("importing awareness indicators", msgs)
             self.stormIsInPrint("importing scanner indicators", msgs)
+            self.stormHasNoWarnErr(msgs)
 
             msgs = await core.stormlist("zw.sinkdb.import --debug --no-scanners --no-sinkholes")
             self.stormIsInPrint("results from SinkDB", msgs)
             self.stormNotInPrint("importing sinkhole indicators", msgs)
             self.stormIsInPrint("importing awareness indicators", msgs)
             self.stormNotInPrint("importing scanner indicators", msgs)
+            self.stormHasNoWarnErr(msgs)
             
             msgs = await core.stormlist("zw.sinkdb.import")
             print_str = '\n'.join([m[1].get('mesg') for m in msgs if m[0] == 'print'])
             matches = re.findall(r"Modeled (\d+) results from SinkDB", print_str)
             self.assertGreater(len(matches), 0)
             self.assertGreater(int(matches[0]), 300)
+
+            self.assertGreater(await core.count("inet:ipv4 +#rep.sinkdb.type.ipv4_range"), 0)

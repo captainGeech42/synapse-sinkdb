@@ -80,7 +80,7 @@ This package exposes two permissions:
 * `zw.sinkdb.user`: Intended for general analyst use, allows the invocation of `zw.sinkdb.lookup`
 * `zw.sinkdb.admin`: Intended for administrative/automation use, allows the invocation of `zw.sinkdb.import` and changing of global configuration items
 
-This package uses a `meta:source` node with the GUID `a9fc8fc6af73f0bf2dda26961f50cfe6`. All observed nodes are edged with `seen` to the `meta:source`.
+This package uses a `meta:source` node with the GUID `a9fc8fc6af73f0bf2dda26961f50cfe6`. All observed nodes are edged with `seen` to the `meta:source`. The created `ps:contact` nodes to track the operators use the type `zw.sinkdb.operator`.
 
 ## Tag Tree
 

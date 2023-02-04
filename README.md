@@ -55,6 +55,8 @@ You can also bulk import the `listed` indicators from SinkDB:
 
 ```
 storm> zw.sinkdb.import
+Modeled 467 results from SinkDB
+complete. 0 nodes in 4791 ms (0/sec).
 ```
 
 By default, `lookup` and `import` use a 30 day cache window. To override this, use the `--asof` flag. To ignore the cached data, specify `--asof now`.

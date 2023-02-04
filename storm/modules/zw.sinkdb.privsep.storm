@@ -133,6 +133,14 @@ function modelLookupResponse(node, data) {
     // add edge to the meta:source node
     [ <(seen)+ { yield $srcnode }]
 
+    if ($data.expose_org = 1 and $data.operator) {
+        // add a ps:contact node for the operator
+        $t = $lib.str.concat($prefix, ".operator")
+        $g = $lib.guid(zw,sinkdb,$data.operator)
+        [ <(has)+ {[ ps:contact=$g :name=$data.operator :type=zw.sinkdb.operator +#$t ]} ]
+        { spin | ps:contact=$g [<(seen)+ { yield $srcnode }] }
+    }
+
     fini { return() }
 }
 

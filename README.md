@@ -98,9 +98,11 @@ By default, this package creates a tag tree under `#rep.sinkdb` (you can change 
 
 The time interval on `#rep.sinkdb.sinkhole` reflects the time data exposed by SinkDB (that is, when it was added to SinkDB, through the current time when the entry was observed on SinkDB)
 
+An additional tag, `#rep.sinkdb.operator`, is applied on `ps:contact` nodes that are created to track the sinkhole operators.
+
 ## Running the test suite
 
-You must have a SinKDB HTTPS API key to run the tests. Please put the key in `$SYNAPSE_SINKDB_APIKEY` when running the tests.
+You must have a SinkDB HTTPS API key to run the tests. Please put the key in `$SYNAPSE_SINKDB_APIKEY` when running the tests.
 
 Additionally, you must provide your own entries on SinkDB to seed the test cortex, since the data is TLP:AMBER and can't be stored in the public test code. Test data should be a JSON blob in the below structure. Please be mindful of the `ipv4_range` entries, each IP in the range will be looked up.
 

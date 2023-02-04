@@ -181,3 +181,5 @@ class SynapseSinkdbTest(s_test.SynTest):
             self.assertGreater(int(matches[0]), 300)
 
             self.assertGreater(await core.count("inet:ipv4 +#rep.sinkdb.type.ipv4_range"), 0)
+
+            self.assertGreater(await core.count("inet:ipv4 +#rep.sinkdb +{<(has)- ps:contact +#rep.sinkdb.operator +:type=zw.sinkdb.operator}"), 0)

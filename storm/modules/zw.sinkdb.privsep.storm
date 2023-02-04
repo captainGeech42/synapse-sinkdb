@@ -155,7 +155,7 @@ function __modelIpv4Range(d) {
         [inet:ipv4=$d.indicator]
     }
                 
-    [inet:cidr4=$d.indicator] | $modelLookupResponse($node, $d)
+    [inet:cidr4=$d.indicator] { $modelLookupResponse($node, $d) }
 }
 
 // Model an IPv6 range from SinkDB
@@ -174,13 +174,13 @@ function __modelIPv6Range(d) {
         [inet:ipv6=$ioc]
     }
                 
-    [inet:cidr6=$ioc] | $modelLookupResponse($node, $d)
+    [inet:cidr6=$ioc] { $modelLookupResponse($node, $d) }
 }
 
 // Model the exported data from SinkDB. Creates nodes.
 // Args:
 //   - $data: list of dicts of data from SinkDB
-// Returns: number of items processed
+// Yields nodes
 function modelExportResponse(data) {
     init { $count = 0 }
 
@@ -188,40 +188,40 @@ function modelExportResponse(data) {
         if $lib.debug { $lib.print("modeling {i} (type: {t})", i=$d.indicator, t=$d.type) }
 
         switch $d.type {
-            "ipv4": { [inet:ipv4=$d.indicator] | $modelLookupResponse($node, $d) }
-            "ipv6": { [inet:ipv6=$d.indicator] | $modelLookupResponse($node, $d) }
-            "ipv4_range": { $__modelIpv4Range($d) }
-            "ipv6_range": { $__modelIPv6Range($d) }
+            "ipv4": { [inet:ipv4=$d.indicator] { $modelLookupResponse($node, $d) } }
+            "ipv6": { [inet:ipv6=$d.indicator] { $modelLookupResponse($node, $d) } }
+            "ipv4_range": { yield $__modelIpv4Range($d) }
+            "ipv6_range": { yield $__modelIPv6Range($d) }
             "domain_soa": {
                 if ($d.indicator.find("@") != $lib.null) {
-                    [inet:email=$d.indicator] | $modelLookupResponse($node, $d)
+                    [inet:email=$d.indicator] { $modelLookupResponse($node, $d) }
                 } else {
-                    [inet:fqdn=$d.indicator] | $modelLookupResponse($node, $d)
+                    [inet:fqdn=$d.indicator] { $modelLookupResponse($node, $d) }
                 }
             }
-            "whois_email": { [inet:email=$d.indicator] | $modelLookupResponse($node, $d) }
-            "nameserver": { [inet:fqdn=$d.indicator] | $modelLookupResponse($node, $d) }
-            "web_url": { [inet:url=$d.indicator] | $modelLookupResponse($node, $d) }
+            "whois_email": { [inet:email=$d.indicator] { $modelLookupResponse($node, $d) } }
+            "nameserver": { [inet:fqdn=$d.indicator] { $modelLookupResponse($node, $d) } }
+            "web_url": { [inet:url=$d.indicator] { $modelLookupResponse($node, $d) } }
             "web_domain": {
                 // they put multiple comma delimited IOCs in here sometimes
                 for $part in $d.indicator.split(", ") {
                     // sometimes this has fqdns and IP address, no clue why
                     try {
-                        [inet:fqdn=$part] | $modelLookupResponse($node, $d)
+                        [inet:fqdn=$part] { $modelLookupResponse($node, $d) }
                     } catch BadTypeValu as err {
-                        [inet:ipv4=$part] | $modelLookupResponse($node, $d)
+                        [inet:ipv4=$part] { $modelLookupResponse($node, $d) }
                     }
                 }
             }
-            "email_from": { [inet:email=$d.indicator] | $modelLookupResponse($node, $d) }
-            "sending_ipv4": { [inet:ipv4=$d.indicator] | $modelLookupResponse($node, $d) }
-            "sending_ipv4_range": { $__modelIpv4Range($d) }
-            "web_ipv4": { [inet:ipv4=$d.indicator] | $modelLookupResponse($node, $d) }
-            "sending_ipv6": { [inet:ipv6=$d.indicator] | $modelLookupResponse($node, $d) }
-            "sending_ipv6_range": { $__modelIPv6Range($d) }
-            "web_ipv6": { [inet:ipv6=$d.indicator] | $modelLookupResponse($node, $d) }
-            "email_subject": { [it:dev:str=$d.indicator] | $modelLookupResponse($node, $d) }
-            "email_from_name": { [it:dev:str=$d.indicator] | $modelLookupResponse($node, $d) }
+            "email_from": { [inet:email=$d.indicator] { $modelLookupResponse($node, $d) } }
+            "sending_ipv4": { [inet:ipv4=$d.indicator] { $modelLookupResponse($node, $d) } }
+            "sending_ipv4_range": { yield $__modelIpv4Range($d) }
+            "web_ipv4": { [inet:ipv4=$d.indicator] { $modelLookupResponse($node, $d) } }
+            "sending_ipv6": { [inet:ipv6=$d.indicator] { $modelLookupResponse($node, $d) } }
+            "sending_ipv6_range": { yield $__modelIPv6Range($d) }
+            "web_ipv6": { [inet:ipv6=$d.indicator] { $modelLookupResponse($node, $d) } }
+            "email_subject": { [it:dev:str=$d.indicator] { $modelLookupResponse($node, $d) } }
+            "email_from_name": { [it:dev:str=$d.indicator] { $modelLookupResponse($node, $d) } }
             *: {
                 $lib.warn("got an unsupported indicator type from sinkdb: {s}", s=$d.type)
                 continue
@@ -231,5 +231,12 @@ function modelExportResponse(data) {
         $count = ($count + 1)
     }
 
-    fini { return($count) }
+    // not foolproof, a big cidr mask will blow the count up, but a good sanity check
+    fini {
+        if ($data.size() > $count) {
+            $lib.warn("tried to model {i} records but only could do {j} nodes", i=$data.size(), j=$count)
+        } else {
+            if $lib.debug { $lib.print("modeled {d} nodes", d=$count) }
+        }
+    }
 }

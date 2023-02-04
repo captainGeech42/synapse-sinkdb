@@ -98,6 +98,11 @@ commands:
           default: false
           action: store_true
           help: Show verbose debug output.
+      - - --yield
+        - type: bool
+          default: false
+          action: store_true
+          help: Yield the newly created nodes.
       - - --no-awareness
         - type: bool
           default: false

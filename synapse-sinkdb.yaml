@@ -118,3 +118,7 @@ optic:
       storm: zw.sinkdb.lookup
       descr: Enrich a node with SinkDB data
       forms: [ inet:ipv4, inet:fqdn, inet:email ]
+    - name: SinkDB Lookup (no cache)
+      storm: zw.sinkdb.lookup --asof now
+      descr: Enrich a node with SinkDB data, ignoring any cached data
+      forms: [ inet:ipv4, inet:fqdn, inet:email ]

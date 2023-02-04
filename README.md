@@ -53,6 +53,12 @@ storm> zw.sinkdb.import
 
 For more details, please run `help zw.sinkdb`.
 
+### Optic
+
+If you are an enterprise customer with Optic, there is a right-click action registered for `inet:fqdn`, `inet:email`, and `inet:ipv4` nodes:
+
+![optic screenshot of sinkdb enrichment](./optic.png)
+
 ## Administration
 
 This package exposes two permissions:

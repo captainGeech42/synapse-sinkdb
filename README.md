@@ -1,5 +1,6 @@
 # synapse-sinkdb
 [![Tests](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/test.yml/badge.svg)](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/test.yml)
+
 Synapse Rapid Powerup for [SinkDB](https://sinkdb.abuse.ch/)
 
 ## Install
@@ -56,8 +57,8 @@ For more details, please run `help zw.sinkdb`.
 
 This package exposes two permissions:
 
-* `power-ups.zw.sinkdb.user`: Intended for general analyst use, allows the invocation of `zw.sinkdb.lookup`
-* `power-ups.zw.sinkdb.admin`: Intended for administrative/automation use, allows the invocation of `zw.sinkdb.import`
+* `zw.sinkdb.user`: Intended for general analyst use, allows the invocation of `zw.sinkdb.lookup`
+* `zw.sinkdb.admin`: Intended for administrative/automation use, allows the invocation of `zw.sinkdb.import`
 
 ## Tag Tree
 
@@ -71,7 +72,7 @@ This package creates a tag tree under `#rep.sinkdb`:
 * `#rep.sinkdb.expose.lea`: The sinkhole is exclusively exposed to law enforcement agencies
 * `#rep.sinkdb.class.listed`: The entry is classified as "listed"
 * `#rep.sinkdb.class.query`: The entry is classified as "query-only"
-* `#rep.sinkdb.type.*`: The type of entry on SinkDB (`ipv4`, `ipv6`, `ipv4_range`, `ipv6_range`, `domain_soa`, `whois_email`, or `nameserver`)
+* `#rep.sinkdb.type.*`: The type of entry on SinkDB (`ipv4`, `ipv6`, `ipv4_range`, `ipv6_range`, `domain_soa`, `whois_email`, `nameserver`, `web_url`, `web_domain`, `email_from`, `sending_ipv4`, `sending_ipv4_range`, `web_ipv4`)
 
 The time interval on `#rep.sinkdb.sinkhole` reflects the time data exposed by SinkDB (that is, when it was added to SinkDB, through the current time when the entry was observed on SinkDB)
 

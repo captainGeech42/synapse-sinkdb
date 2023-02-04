@@ -11,10 +11,10 @@ genopts:
   dotstorm: true
 
 perms:
-  - perm: [power-ups, zw, sinkdb, user]
+  - perm: [zw, sinkdb, user]
     desc: Allows a user to lookup indicators on SinkDB
     gate: cortex
-  - perm: [power-ups, zw, sinkdb, admin]
+  - perm: [zw, sinkdb, admin]
     desc: Allows a user to bulk import the listable IOCs on SinkDB
     gate: cortex
 
@@ -26,13 +26,13 @@ modules:
     modconf:
       source: a9fc8fc6af73f0bf2dda26961f50cfe6
     asroot:perms:
-      - [power-ups, zw, sinkdb, user]
+      - [zw, sinkdb, user]
 
 commands:
   - name: zw.sinkdb.setup.apikey
     descr: Set the SinkDB HTTPS API key
     perms:
-      - [power-ups, zw, sinkdb, user]
+      - [zw, sinkdb, user]
     cmdargs:
       - - apikey
         - type: str
@@ -46,7 +46,7 @@ commands:
   - name: zw.sinkdb.lookup
     descr: Lookup an indicator on SinkDB
     perms:
-      - [power-ups, zw, sinkdb, user]
+      - [zw, sinkdb, user]
     forms:
       input:
         - inet:email
@@ -60,10 +60,17 @@ commands:
   - name: zw.sinkdb.import
     descr: Import the listable indicators on SinkDB
     perms:
-      - [power-ups, zw, sinkdb, admin]
+      - [zw, sinkdb, admin]
     forms:
       output:
         - inet:email
         - inet:fqdn
         - inet:ipv4
         - inet:ipv6
+
+optic:
+  actions:
+    - name: SinkDB Lookup
+      storm: zw.sinkdb.lookup
+      descr: Enrich a node with SinkDB data
+      forms: [ inet:ipv4, inet:fqdn, inet:email ]

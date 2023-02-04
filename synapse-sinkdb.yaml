@@ -21,7 +21,8 @@ perms:
 modules:
   - name: zw.sinkdb.api
   - name: zw.sinkdb.setup
-  # - name: zw.sinkdb.privsep
+
+  - name: zw.sinkdb.privsep
     modconf:
       source: a9fc8fc6af73f0bf2dda26961f50cfe6
     asroot:perms:
@@ -65,3 +66,4 @@ commands:
         - inet:email
         - inet:fqdn
         - inet:ipv4
+        - inet:ipv6

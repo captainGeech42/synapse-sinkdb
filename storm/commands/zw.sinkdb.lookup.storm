@@ -1,1 +1,19 @@
-init { $lib.print("doing lookup mock") }
+init {
+    $api = $lib.import(zw.sinkdb.api)
+    $privsep = $lib.import(zw.sinkdb.privsep)
+}
+
+$data = $lib.false
+
+switch $node.form() {
+    "inet:fqdn": { $data = $api.lookupFqdn($node.repr()) }
+    "inet:email": { $data = $api.lookupEmail($node.repr()) }
+    "inet:ipv4": { $data = $api.lookupIpv4($node.repr()) }
+    // *: { $lib.warn("unsupported form received: {f}", f=$node.form()) }
+}
+
+if ($data) {
+    for $res in $data {
+        { | $privsep.modelLookupResponse($node, $res) }
+    }
+}

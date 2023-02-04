@@ -1,4 +1,5 @@
 # synapse-sinkdb
+[![Tests](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/test.yml/badge.svg)](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/test.yml)
 Synapse Rapid Powerup for [SinkDB](https://sinkdb.abuse.ch/)
 
 ## Install
@@ -23,30 +24,81 @@ First, configure your HTTPS API key (globally, or per user with `--self`):
 storm> zw.sinkdb.setup.apikey <api key here>
 ```
 
-Then, you can lookup IOCs against SinkDB
+Then, you can lookup IOCs against SinkDB:
 
 ```
-storm> inet:fqdn=mysinkhole.net | zw.sinkdb.lookup
+storm> inet:fqdn=ns1.mysinkhole.lol | zw.sinkdb.lookup
+................
+inet:fqdn=ns1.mysinkhole.lol
+        :domain = mysinkhole.lol
+        :host = ns1
+        :issuffix = False
+        :iszone = False
+        :zone = mysinkhole.lol
+        .created = 2023/02/04 02:11:24.673
+        #rep.sinkdb.class.listed = (2023/02/04 02:14:02.284, 2023/02/04 02:14:02.285)
+        #rep.sinkdb.has_operator = (2023/02/04 02:14:02.284, 2023/02/04 02:14:02.285)
+        #rep.sinkdb.sinkhole = (2021/06/27 19:46:08.000, 2023/02/04 02:14:02.284)
+        #rep.sinkdb.type.nameserver = (2023/02/04 02:14:02.284, 2023/02/04 02:14:02.285)
+        #test
+complete. 1 nodes in 706 ms (1/sec).
+```
+
+You can also bulk import the `listed` indicators from SinkDB:
+
+```
+storm> zw.sinkdb.import
 ```
 
 For more details, please run `help zw.sinkdb`.
+
+## Administration
+
+This package exposes two permissions:
+
+* `power-ups.zw.sinkdb.user`: Intended for general analyst use, allows the invocation of `zw.sinkdb.lookup`
+* `power-ups.zw.sinkdb.admin`: Intended for administrative/automation use, allows the invocation of `zw.sinkdb.import`
+
+## Tag Tree
+
+This package creates a tag tree under `#rep.sinkdb`:
+
+* `#rep.sinkdb.sinkhole`: The node is a sinkhole
+* `#rep.sinkdb.awareness`: The node is a part of a phishing awareness campaign
+* `#rep.sinkdb.scanner`: The node is a scanner
+* `#rep.sinkdb.has_operator`: The operator of the entry is made known
+* `#rep.sinkdb.expose.vendor`: The sinkhole is exposed to vendors
+* `#rep.sinkdb.expose.lea`: The sinkhole is exclusively exposed to law enforcement agencies
+* `#rep.sinkdb.class.listed`: The entry is classified as "listed"
+* `#rep.sinkdb.class.query`: The entry is classified as "query-only"
+* `#rep.sinkdb.type.*`: The type of entry on SinkDB (`ipv4`, `ipv6`, `ipv4_range`, `ipv6_range`, `domain_soa`, `whois_email`, or `nameserver`)
+
+The time interval on `#rep.sinkdb.sinkhole` reflects the time data exposed by SinkDB (that is, when it was added to SinkDB, through the current time when the entry was observed on SinkDB)
 
 ## Running the test suite
 
 You must have a SinKDB HTTPS API key to run the tests. Please put the key in `$SYNAPSE_SINKDB_APIKEY` when running the tests.
 
-Additionally, you must provide your own entries on SinkDB, since the data is TLP:AMBER and can't be stored in the public test code. Test data should be a JSON blob in the following structure (`ipv6_range` may be left empty currently, but should still be present):
+Additionally, you must provide your own entries on SinkDB to seed the test cortex, since the data is TLP:AMBER and can't be stored in the public test code. Test data should be a JSON blob in the below structure. Please be mindful of the `ipv4_range` entries, each IP in the range will be looked up.
 
 ```
 {
     "ipv4": [],
-    "ipv6": [],
     "ipv4_range": [],
-    "ipv6_range": [],
     "domain_soa": [],
     "whois_email": [],
     "nameserver": []
 }
+```
+
+Make sure you add at least the following indicators (the test suite checks for the combination of tags they provide). They *should* be accessible on any account type, ymmv:
+
+```
+https://sinkdb.abuse.ch/sinkholes/indicator/1b26d0e462/
+https://sinkdb.abuse.ch/sinkholes/indicator/d9b85decab/
+https://sinkdb.abuse.ch/sinkholes/indicator/55b492114b/
+https://sinkdb.abuse.ch/sinkholes/indicator/d42a88a939/
+https://sinkdb.abuse.ch/sinkholes/indicator/e3fdeea6a0/
 ```
 
 This can be stored on disk and provided as a filepath in `$SYNAPSE_SINKDB_DATA_PATH`, or the data can be stored directly in `$SYNAPSE_SINKDB_DATA`. Optionally, if you can verify SinkDB access to me, I'll send you my test blob to make things easier for you.
@@ -55,3 +107,7 @@ This can be stored on disk and provided as a filepath in `$SYNAPSE_SINKDB_DATA_P
 $ pip install -r requirements.txt
 $ SYNAPSE_SINKDB_APIKEY=asdf SYNAPSE_SINKDB_DATA_PATH=sinkdb_data.json python -m pytest test_synapse_sinkdb.py
 ```
+
+## TODO:
+
+* `ps:contact` modeling to track the sinkholer

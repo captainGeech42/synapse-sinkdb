@@ -1,0 +1,33 @@
+// Get the proper meta:source node for SinkDB
+// Args: n/a
+// Returns: meta:source node
+function getMetaSource() {
+    [ meta:source=$modconf.source :name="sinkdb" ]
+    return($node)
+}
+
+// Model the response for a sinkdb entry
+// Args:
+//   - $node: node to model tags on
+//   - $data: dict of data from SinkDB
+// Returns: none
+function modelLookupResponse(node, data) {
+    $src = $data.source
+    $class = $data.classification
+    $type = $data.type
+    $ts = $lib.time.parse($data.date_added, "%Y-%m-%d %H:%M:%S UTC")
+    $now = $lib.time.now()
+    $srcnode = $getMetaSource()
+
+    // add tags to the indicator
+    // TODO: should we be removing things that are no longer true, or allow the analyst to derive the current state based on the timestamps?
+    yield $node | [+#rep.sinkdb.$src=($ts,$now) +#rep.sinkdb.class.$class=$now +#rep.sinkdb.type.$type=$now]
+    if ($data.expose_org = 1) {[ +#rep.sinkdb.has_operator=$now ]}
+    if ($data.expose_vend = 1) {[ +#rep.sinkdb.expose.vendor=$now ]}
+    if ($data.lea_only = 1) {[ +#rep.sinkdb.expose.lea=$now ]}
+
+    // add edge to the meta:source node
+    [ <(seen)+ { yield $srcnode }]
+
+    fini { return() }
+}

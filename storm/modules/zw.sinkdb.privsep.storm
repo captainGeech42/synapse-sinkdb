@@ -1,7 +1,10 @@
 // Name of the dictionary key used to store the SinkDB HTTPS API key
 $apiKeyName = "zw.sinkdb:https-apikey"
 
-// Get the SinKDB HTTPS API key
+// Name of the dictionary key to store the SinkDB tag prefix
+$tagPrefixKeyName = "zw.sinkdb:tag-prefix"
+
+// Get the SinkDB HTTPS API key
 // Args: n/a
 // Returns: str (the API key)
 function getApiKey() {
@@ -34,6 +37,27 @@ function setApiKey(key, user) {
     }
 }
 
+// Get the SinkDB tag prefix
+// Args: n/a
+// Returns: str (the tag prefix)
+function getTagPrefix() {
+    return($lib.globals.get($tagPrefixKeyName, default=rep.sinkdb))
+}
+
+// Set the SinkDB tag prefix
+// Args:
+//  - prefix (str): the tag prefix to save
+// Returns: n/a
+function setTagPrefix(prefix) {
+    ($ok, $norm) = $lib.trycast(syn:tag:part, $prefix)
+    if (not $ok) {
+        $lib.warn("failed to set tag prefix, invalid value: {s}", s=$prefix)
+        return($lib.null)
+    }
+
+    $lib.globals.set($tagPrefixKeyName, $prefix)
+}
+
 // Make an API call to SinkDB
 // Args
 //   - $querystr (str): Query string to append to the POST body (which this function will add the API key to)
@@ -63,19 +87,36 @@ function getMetaSource() {
 //   - $data: dict of data from SinkDB
 // Returns: none
 function modelLookupResponse(node, data) {
-    $src = $data.source
-    $class = $data.classification
+    ($ok_s, $src) = $lib.trycast(syn:tag:part, $data.source)
+    ($ok_c, $class) = $lib.trycast(syn:tag:part, $data.classification)
+    if (not ($ok_s and $ok_c)) {
+        $lib.warn("failed to model {ioc}, couldn't norm {s} or {c}", ioc=$data.indicator, s=$data.source, c=$data.classification)
+        return()
+    }
+
     $type = $data.type
     $ts = $lib.time.parse($data.date_added, "%Y-%m-%d %H:%M:%S UTC")
     $now = $lib.time.now()
     $srcnode = $getMetaSource()
 
+    $prefix = $getTagPrefix()
+
+    $tagsToApply = ([$src, $lib.str.concat(class., $class), $lib.str.concat(type., $type)])
+    if ($data.expose_org = 1) { $tagsToApply.append(has_operator) }
+    if ($data.expose_vend = 1) { $tagsToApply.append(expose.vendor) }
+    if ($data.lea_only = 1) { $tagsToApply.append(expose.lea) }
+
+    $tags = ([])
+    for $t in $tagsToApply {
+        $tags.append($lib.str.join('.', ($prefix, $t)))
+    }
+
     // add tags to the indicator
     // TODO: should we be removing things that are no longer true, or allow the analyst to derive the current state based on the timestamps?
-    yield $node | [+#rep.sinkdb.$src=($ts,$now) +#rep.sinkdb.class.$class=$now +#rep.sinkdb.type.$type=$now]
-    if ($data.expose_org = 1) {[ +#rep.sinkdb.has_operator=$now ]}
-    if ($data.expose_vend = 1) {[ +#rep.sinkdb.expose.vendor=$now ]}
-    if ($data.lea_only = 1) {[ +#rep.sinkdb.expose.lea=$now ]}
+    yield $node | { for $t in $tags {
+        if ($t.endswith($src)) {[+#$t=($ts,$now)]}
+        else {[+#$t=$now]}
+    } }
 
     // add edge to the meta:source node
     [ <(seen)+ { yield $srcnode }]
@@ -87,6 +128,7 @@ function modelExportResponse(data) {
     for $d in $data {
         switch $d.type {
             "ipv4": { [inet:ipv4=$d.indicator] | $modelLookupResponse($node, $d) | yield $node }
+            
             /*"ipv6": { $n = {[inet:ipv6=$d.indicator]} }
             "ipv4_range": { $n = {[inet:ipv4=$d.indicator]} }
             "ipv6_range": { $n = {[inet:ipv6=$d.indicator]} }

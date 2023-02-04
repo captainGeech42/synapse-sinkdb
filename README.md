@@ -1,5 +1,5 @@
 # synapse-sinkdb
-[![Tests](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/test.yml/badge.svg)](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/test.yml) [![Release](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/release.yml/badge.svg)](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/release.yml) [![GitHub Release](https://img.shields.io/github/release/captainGeech42/synapse-sinkdb.svg?style=flat)]()  
+[![Tests](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/test.yml/badge.svg)](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/test.yml) [![Release](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/release.yml/badge.svg)](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/release.yml) [![GitHub Release](https://img.shields.io/github/release/captainGeech42/synapse-sinkdb.svg?style=flat)](https://github.com/captainGeech42/synapse-sinkdb/releases)
 
 Synapse Rapid Powerup for [SinkDB](https://sinkdb.abuse.ch/)
 
@@ -23,6 +23,12 @@ First, configure your HTTPS API key (globally, or per user with `--self`):
 
 ```
 storm> zw.sinkdb.setup.apikey <api key here>
+```
+
+Optionally, you can also change the tag prefix (default is `rep.sinkdb`):
+
+```
+storm> zw.sinkdb.setup.tagprefix 3p.aka.sinkdb
 ```
 
 Then, you can lookup IOCs against SinkDB:
@@ -64,11 +70,11 @@ If you are an Optic user, there is a right-click action registered for `inet:fqd
 This package exposes two permissions:
 
 * `zw.sinkdb.user`: Intended for general analyst use, allows the invocation of `zw.sinkdb.lookup`
-* `zw.sinkdb.admin`: Intended for administrative/automation use, allows the invocation of `zw.sinkdb.import`
+* `zw.sinkdb.admin`: Intended for administrative/automation use, allows the invocation of `zw.sinkdb.import` and changing of global configuration items
 
 ## Tag Tree
 
-By default, this package creates a tag tree under `#rep.sinkdb`:
+By default, this package creates a tag tree under `#rep.sinkdb` (you can change the prefix globally with `zw.sinkdb.setup.tagprefix`):
 
 * `#rep.sinkdb.sinkhole`: The node is a sinkhole
 * `#rep.sinkdb.awareness`: The node is a part of a phishing awareness campaign
@@ -120,8 +126,4 @@ $ SYNAPSE_SINKDB_APIKEY=asdf SYNAPSE_SINKDB_DATA_PATH=sinkdb_data.json python -m
 
 * `ps:contact` modeling to track the sinkholer
 * [jsonstor caching](https://synapse.docs.vertex.link/en/latest/synapse/devguides/power-ups.html#command-option-conventions)
-* user specified tag tree root
 * sign the powerup
-
-
-

@@ -1,0 +1,6 @@
+init {
+    $privsep = $lib.import(zw.sinkdb.privsep)
+
+    $privsep.setTagPrefix($cmdopts.tagname)
+    $lib.print("Changed the SinkDB tag prefix to #{p}", p=$privsep.getTagPrefix())
+}

@@ -78,7 +78,7 @@ class SynapseSinkdbTest(s_test.SynTest):
         self.assertGreater(await core.count("for $v in $vals { [inet:email=$v +#test.whois_email] }", opts={"vars": {"vals": data["whois_email"]}}), 0)
         self.assertGreater(await core.count("#test"), 0)
 
-    async def _t_check_lookup_type(self, core: s_cortex.Cortex, type: str, expected_tags: list[str]):
+    async def _t_check_lookup_type(self, core: s_cortex.Cortex, type: str, expected_tags: list[str], prefix = "rep.sinkdb"):
         """Validate a type of lookup nodes on SinkDB data modeling."""
 
         # get the number of nodes of the category
@@ -89,10 +89,10 @@ class SynapseSinkdbTest(s_test.SynTest):
         await core.callStorm(f"#test.{type} | zw.sinkdb.lookup")
 
         # make sure each node got at least something from sinkdb
-        self.assertEqual(await core.count(f"#test.{type} +#rep.sinkdb" + " +{ <(seen)- meta:source:name=sinkdb }"), num_nodes)
+        self.assertEqual(await core.count(f"#test.{type} +#{prefix}" + " +{ <(seen)- meta:source:name=sinkdb }"), num_nodes)
 
         # make sure the main test node got all of the proper tags
-        tag_str = " ".join(["+#rep.sinkdb." + x for x in expected_tags])
+        tag_str = " ".join([f"+#{prefix}." + x for x in expected_tags])
         self.assertGreater(await core.count(f"#test.{type} {tag_str}"), 0)
 
     async def test_lookups(self):
@@ -107,6 +107,18 @@ class SynapseSinkdbTest(s_test.SynTest):
             await self._t_check_lookup_type(core, "ipv4_range", ["class.listed", "sinkhole", "type.ipv4_range"])
             await self._t_check_lookup_type(core, "nameserver", ["class.query_only", "has_operator", "sinkhole", "type.nameserver"])
             await self._t_check_lookup_type(core, "whois_email", ["class.listed", "has_operator", "sinkhole", "type.domain_soa", "type.whois_email"])
+
+    async def test_tag_prefix(self):
+        self.skipIfNoInternet()
+
+        async with self.getTestCore() as core:
+            await self._t_install_pkg(core)
+            await self._t_seed_cortex(core)
+
+            await self._t_check_lookup_type(core, "domain_soa", ["class.listed", "expose.vendor", "has_operator", "sinkhole", "type.domain_soa"])
+            msgs = await core.stormlist("zw.sinkdb.setup.tagprefix new.asdf")
+            self.stormIsInPrint("tag prefix to #new.asdf", msgs)
+            await self._t_check_lookup_type(core, "domain_soa", ["class.listed", "expose.vendor", "has_operator", "sinkhole", "type.domain_soa"], prefix="new.asdf")
 
     async def test_import(self):
         self.skipIfNoInternet()

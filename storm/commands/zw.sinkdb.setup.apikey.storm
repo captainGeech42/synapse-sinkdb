@@ -1,9 +1,14 @@
-init { $privsep = $lib.import(zw.sinkdb.privsep) }
+init {
+    $privsep = $lib.import(zw.sinkdb.privsep)
+    
+    if ($cmdopts.self) {
+        $lib.print("Setting SinkDB HTTPS API key for the current user.")
+    } else {
+        if (not $lib.user.allowed("zw.sinkdb.admin")) {
+            $lib.exit("failed to set sinkdb global API key, missing zw.sinkdb.admin perms")
+        }
+        $lib.print("Setting SinkDB HTTPS API key for all users.")
+    }
 
-if ($cmdopts.self) {
-    $lib.print("Setting SinkDB HTTPS API key for the current user.")
-} else {
-    $lib.print("Setting SinkDB HTTPS API key for all users.")
+    $privsep.setApiKey($cmdopts.apikey, $cmdopts.self)
 }
-
-$privsep.setApiKey($cmdopts.apikey, $cmdopts.self)

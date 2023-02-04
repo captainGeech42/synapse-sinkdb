@@ -15,12 +15,11 @@ perms:
     desc: Allows a user to lookup indicators on SinkDB
     gate: cortex
   - perm: [zw, sinkdb, admin]
-    desc: Allows a user to bulk import the listable IOCs on SinkDB
+    desc: Allows a user to bulk import the listable IOCs on SinkDB, and make global configuration changes
     gate: cortex
 
 modules:
   - name: zw.sinkdb.api
-
   - name: zw.sinkdb.privsep
     modconf:
       source: a9fc8fc6af73f0bf2dda26961f50cfe6
@@ -41,6 +40,15 @@ commands:
           default: false
           action: store_true
           help: Set the key as a user variable. If not used, the key is set globally.
+  
+  - name: zw.sinkdb.setup.tagprefix
+    descr: "Set the SinkDB tag tree prefix (default: `rep.sinkdb`). Note that this won't migrate any existing tags under the previous prefix."
+    perms:
+      - [zw, sinkdb, admin]
+    cmdargs:
+      - - tagname
+        - type: str
+          help: The tag prefix to use
 
   - name: zw.sinkdb.lookup
     descr: Lookup an indicator on SinkDB
@@ -66,6 +74,8 @@ commands:
         - inet:fqdn
         - inet:ipv4
         - inet:ipv6
+        - inet:url
+        - it:dev:str
     cmdargs:
       - - --no-awareness
         - type: bool

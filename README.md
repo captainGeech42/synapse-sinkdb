@@ -65,7 +65,7 @@ For more details, please run `help zw.sinkdb`.
 
 If you are an Optic user, there are right-click actions registered for `inet:fqdn`, `inet:email`, and `inet:ipv4` nodes:
 
-![optic screenshot of sinkdb enrichment](./optic.png)
+![optic screenshot of sinkdb enrichment](./optic-actions.png)
 
 ## Administration
 

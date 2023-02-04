@@ -95,33 +95,37 @@ function getMetaSource() {
 //   - $data: dict of data from SinkDB
 // Returns: n/a
 function modelLookupResponse(node, data) {
-    ($ok_s, $src) = $lib.trycast(syn:tag:part, $data.source)
-    ($ok_c, $class) = $lib.trycast(syn:tag:part, $data.classification)
-    if (not ($ok_s and $ok_c)) {
-        $lib.warn("failed to model {ioc}, couldn't norm {s} or {c}", ioc=$data.indicator, s=$data.source, c=$data.classification)
+    ($ok, $src) = $lib.trycast(syn:tag:part, $data.source)
+    if (not $ok) {
+        $lib.warn("failed to model {ioc}, couldn't norm {d}", ioc=$data.indicator, d=$data.source)
         return()
     }
-
-    $type = $data.type
+    ($ok, $class) = $lib.trycast(syn:tag:part, $data.classification)
+    if (not $ok) {
+        $lib.warn("failed to model {ioc}, couldn't norm {d}", ioc=$data.indicator, d=$data.classification)
+        return()
+    }
+    ($ok, $type) = $lib.trycast(syn:tag:part, $data.type)
+    if (not $ok) {
+        $lib.warn("failed to model {ioc}, couldn't norm {d}", ioc=$data.indicator, d=$data.type)
+        return()
+    }
+    
     $ts = $lib.time.parse($data.date_added, "%Y-%m-%d %H:%M:%S UTC")
     $now = $lib.time.now()
     $srcnode = $getMetaSource()
 
     $prefix = $getTagPrefix()
 
-    $tagsToApply = ([$src, $lib.str.concat(class., $class), $lib.str.concat(type., $type)])
-    if ($data.expose_org = 1) { $tagsToApply.append(has_operator) }
-    if ($data.expose_vend = 1) { $tagsToApply.append(expose.vendor) }
-    if ($data.lea_only = 1) { $tagsToApply.append(expose.lea) }
-
-    $tags = ([])
-    for $t in $tagsToApply {
-        $tags.append($lib.str.join('.', ($prefix, $t)))
-    }
+    $tags = ([$src, $lib.str.concat(class., $class), $lib.str.concat(type., $type)])
+    if ($data.expose_org = 1) { $tags.append(has_operator) }
+    if ($data.expose_vend = 1) { $tags.append(expose.vendor) }
+    if ($data.lea_only = 1) { $tags.append(expose.lea) }
 
     // add tags to the indicator
     // TODO: should we be removing things that are no longer true, or allow the analyst to derive the current state based on the timestamps?
-    yield $node | { for $t in $tags {
+    yield $node | { for $tag in $tags {
+        $t = $lib.str.join('.', ($prefix, $tag))
         if ($t.endswith($src)) {[+#$t=($ts,$now)]}
         else {[+#$t=$now]}
     } }
@@ -132,36 +136,92 @@ function modelLookupResponse(node, data) {
     fini { return() }
 }
 
+// Model an IPv4 range from SinkDB
+// Args:
+//   - d: dict of data from SinkDB
+// Returns: n/a
+function __modelIpv4Range(d) {
+    $size = $lib.cast(int, $d.indicator.split("/").1)
+    if ($size >= 24) {
+        if $lib.debug { $lib.print("making inet:ipv4 nodes for {i}", i=$d.indicator) }
+        [inet:ipv4=$d.indicator]
+    }
+                
+    [inet:cidr4=$d.indicator] | $modelLookupResponse($node, $d)
+}
+
+// Model an IPv6 range from SinkDB
+// Args:
+//   - d: dict of data from SinkDB
+// Returns: n/a
+function __modelIPv6Range(d) {
+    // sinkdb doesn't validate that ipv6 ranges don't have host bits set
+    // remove them if they are
+    $ioc = $lib.regex.replace("::[0-9a-f]+", "::", $d.indicator)
+    if ($lib.debug and $ioc != $d.indicator) { $lib.print("removed host bits from {i}", i=$d.indicator) }
+
+    $size = $lib.cast(int, $ioc.split("/").1)
+    if ($size >= 120) {
+        if $lib.debug { $lib.print("making inet:ipv6 nodes for {i}", i=$d.indicator) }
+        [inet:ipv6=$ioc]
+    }
+                
+    [inet:cidr6=$ioc] | $modelLookupResponse($node, $d)
+}
+
 // Model the exported data from SinkDB. Creates nodes.
 // Args:
-//   - $data: dict of data from SinkDB
-// Returns: n/a
+//   - $data: list of dicts of data from SinkDB
+// Returns: number of items processed
 function modelExportResponse(data) {
+    init { $count = 0 }
+
     for $d in $data {
+        if $lib.debug { $lib.print("modeling {i} (type: {t})", i=$d.indicator, t=$d.type) }
+
         switch $d.type {
-            "ipv4": { [inet:ipv4=$d.indicator] | $modelLookupResponse($node, $d) | yield $node }
-            
-            /*"ipv6": { $n = {[inet:ipv6=$d.indicator]} }
-            "ipv4_range": { $n = {[inet:ipv4=$d.indicator]} }
-            "ipv6_range": { $n = {[inet:ipv6=$d.indicator]} }
+            "ipv4": { [inet:ipv4=$d.indicator] | $modelLookupResponse($node, $d) }
+            "ipv6": { [inet:ipv6=$d.indicator] | $modelLookupResponse($node, $d) }
+            "ipv4_range": { $__modelIpv4Range($d) }
+            "ipv6_range": { $__modelIPv6Range($d) }
             "domain_soa": {
                 if ($d.indicator.find("@") != $lib.null) {
-                    $n = {[inet:email=$d.indicator]}
+                    [inet:email=$d.indicator] | $modelLookupResponse($node, $d)
                 } else {
-                    $n = {[inet:fqdn=$d.indicator]}
+                    [inet:fqdn=$d.indicator] | $modelLookupResponse($node, $d)
                 }
             }
-            "whois_email": { $n = {[inet:email=$d.indicator]} }
-            "nameserver": { $n = {[inet:fqdn=$d.indicator]} }
-            "web_url": { $n = {[inet:url=$d.indicator]} }
-            "web_domain": { $n = {[inet:fqdn=$d.indicator]} }
-            "email_from": { $n = {[inet:email=$d.indicator]} }
-            "sending_ipv4": { $n = {[inet:ipv4=$d.indicator]} }
-            "sending_ipv4_range": { $n = {[inet:ipv4=$d.indicator]} }
-            "web_ipv4": { $n = {[inet:ipv4=$d.indicator]} }
-            "sending_ipv6": { $n = {[inet:ipv6=$d.indicator]} }
-            "sending_ipv6_range": { $n = {[inet:ipv6=$d.indicator]} }
-            "web_ipv6": { $n = {[inet:ipv6=$d.indicator]} }*/
+            "whois_email": { [inet:email=$d.indicator] | $modelLookupResponse($node, $d) }
+            "nameserver": { [inet:fqdn=$d.indicator] | $modelLookupResponse($node, $d) }
+            "web_url": { [inet:url=$d.indicator] | $modelLookupResponse($node, $d) }
+            "web_domain": {
+                // they put multiple comma delimited IOCs in here sometimes
+                for $part in $d.indicator.split(", ") {
+                    // sometimes this has fqdns and IP address, no clue why
+                    try {
+                        [inet:fqdn=$part] | $modelLookupResponse($node, $d)
+                    } catch BadTypeValu as err {
+                        [inet:ipv4=$part] | $modelLookupResponse($node, $d)
+                    }
+                }
+            }
+            "email_from": { [inet:email=$d.indicator] | $modelLookupResponse($node, $d) }
+            "sending_ipv4": { [inet:ipv4=$d.indicator] | $modelLookupResponse($node, $d) }
+            "sending_ipv4_range": { $__modelIpv4Range($d) }
+            "web_ipv4": { [inet:ipv4=$d.indicator] | $modelLookupResponse($node, $d) }
+            "sending_ipv6": { [inet:ipv6=$d.indicator] | $modelLookupResponse($node, $d) }
+            "sending_ipv6_range": { $__modelIPv6Range($d) }
+            "web_ipv6": { [inet:ipv6=$d.indicator] | $modelLookupResponse($node, $d) }
+            "email_subject": { [it:dev:str=$d.indicator] | $modelLookupResponse($node, $d) }
+            "email_from_name": { [it:dev:str=$d.indicator] | $modelLookupResponse($node, $d) }
+            *: {
+                $lib.warn("got an unsupported indicator type from sinkdb: {s}", s=$d.type)
+                continue
+            }
         }
+
+        $count = ($count + 1)
     }
+
+    fini { return($count) }
 }

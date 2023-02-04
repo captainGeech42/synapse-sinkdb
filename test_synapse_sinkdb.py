@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import logging
 
@@ -44,7 +45,7 @@ def get_seed_nodes() -> dict | None:
         if v is None or type(v) is not list or len(v) == 0:
             logger.error("invalid structure for sinkdb data, see README.md")
             return None
-    
+
     return j
 
 class SynapseSinkdbTest(s_test.SynTest):
@@ -86,7 +87,8 @@ class SynapseSinkdbTest(s_test.SynTest):
         self.assertGreater(num_nodes, 0)
 
         # model the sinkdb data
-        await core.callStorm(f"#test.{type} | zw.sinkdb.lookup")
+        msgs = await core.stormlist(f"#test.{type} | zw.sinkdb.lookup")
+        self.stormHasNoWarnErr(msgs)
 
         # make sure each node got at least something from sinkdb
         self.assertEqual(await core.count(f"#test.{type} +#{prefix}" + " +{ <(seen)- meta:source:name=sinkdb }"), num_nodes)
@@ -107,6 +109,9 @@ class SynapseSinkdbTest(s_test.SynTest):
             await self._t_check_lookup_type(core, "ipv4_range", ["class.listed", "sinkhole", "type.ipv4_range"])
             await self._t_check_lookup_type(core, "nameserver", ["class.query_only", "has_operator", "sinkhole", "type.nameserver"])
             await self._t_check_lookup_type(core, "whois_email", ["class.listed", "has_operator", "sinkhole", "type.domain_soa", "type.whois_email"])
+
+            msgs = await core.stormlist("[it:dev:str=asdf] | zw.sinkdb.lookup --debug")
+            self.stormIsInWarn("unsupported form received", msgs)
 
     async def test_tag_prefix(self):
         self.skipIfNoInternet()
@@ -129,12 +134,15 @@ class SynapseSinkdbTest(s_test.SynTest):
 
             msgs = await core.stormlist("#test.nameserver | zw.sinkdb.lookup --debug")
             self.stormIsInPrint("wrote http query cache data", msgs)
+            self.stormHasNoWarnErr(msgs)
             
             msgs = await core.stormlist("#test.nameserver | zw.sinkdb.lookup --debug")
             self.stormIsInPrint("using cached data for http query", msgs)
+            self.stormHasNoWarnErr(msgs)
             
             msgs = await core.stormlist("#test.nameserver | zw.sinkdb.lookup --debug --asof now")
             self.stormIsInPrint("wrote http query cache data", msgs)
+            self.stormHasNoWarnErr(msgs)
 
     async def test_import(self):
         self.skipIfNoInternet()
@@ -142,4 +150,29 @@ class SynapseSinkdbTest(s_test.SynTest):
         async with self.getTestCore() as core:
             await self._t_install_pkg(core)
 
-            # TODO: add import tests
+            msgs = await core.stormlist("zw.sinkdb.import --no-awareness --no-scanners --no-sinkholes")
+            self.stormIsInWarn("no categories of sinkdb data enabled for import", msgs)
+
+            msgs = await core.stormlist("zw.sinkdb.import --debug --no-awareness --no-scanners")
+            self.stormIsInPrint("results from SinkDB", msgs)
+            self.stormIsInPrint("importing sinkhole indicators", msgs)
+            self.stormNotInPrint("importing awareness indicators", msgs)
+            self.stormNotInPrint("importing scanner indicators", msgs)
+
+            msgs = await core.stormlist("zw.sinkdb.import --debug --no-awareness --no-sinkholes")
+            self.stormIsInPrint("results from SinkDB", msgs)
+            self.stormNotInPrint("importing sinkhole indicators", msgs)
+            self.stormNotInPrint("importing awareness indicators", msgs)
+            self.stormIsInPrint("importing scanner indicators", msgs)
+
+            msgs = await core.stormlist("zw.sinkdb.import --debug --no-scanners --no-sinkholes")
+            self.stormIsInPrint("results from SinkDB", msgs)
+            self.stormNotInPrint("importing sinkhole indicators", msgs)
+            self.stormIsInPrint("importing awareness indicators", msgs)
+            self.stormNotInPrint("importing scanner indicators", msgs)
+            
+            msgs = await core.stormlist("zw.sinkdb.import")
+            print_str = '\n'.join([m[1].get('mesg') for m in msgs if m[0] == 'print'])
+            matches = re.findall(r"Modeled (\d+) results from SinkDB", print_str)
+            self.assertGreater(len(matches), 0)
+            self.assertGreater(int(matches[0]), 300)

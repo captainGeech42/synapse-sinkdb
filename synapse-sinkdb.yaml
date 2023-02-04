@@ -84,6 +84,8 @@ commands:
         - inet:fqdn
         - inet:ipv4
         - inet:ipv6
+        - inet:cidr4
+        - inet:cidr6
         - inet:url
         - it:dev:str
     cmdargs:

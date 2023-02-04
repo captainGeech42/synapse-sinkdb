@@ -1,6 +1,8 @@
 init {
     $api = $lib.import(zw.sinkdb.api)
     $privsep = $lib.import(zw.sinkdb.privsep)
+
+    if $cmdopts.debug { $lib.debug = $lib.true }
 }
 
 $data = $lib.false

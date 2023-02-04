@@ -1,21 +1,4 @@
-$setup = $lib.import(zw.sinkdb.setup)
 $privsep = $lib.import(zw.sinkdb.privsep)
-
-// (MODULE INTERNAL ONLY)
-// Make an API call to SinkDB
-// Args
-//   - $querystr (str): Query string to append to the POST body (which this function will add the API key to)
-// Returns: prim (JSON dictionary) or $lib.false
-function __makeSinkdbApiCall(querystr) {
-    $body = $lib.str.format("api_key={k}&{b}", k=$setup.getApiKey(), b=$querystr)
-
-    $resp = $lib.inet.http.post("https://sinkdb-api.abuse.ch/api/v1/", headers=({"content-type": "application/x-www-form-urlencoded"}), body=$body)
-    if ($resp.code != 200) { return($lib.false) }
-
-    $j = $resp.json()
-
-    return($j)
-}
 
 // (MODULE INTERNAL ONLY)
 // Make a lookup request to SinkDB
@@ -23,7 +6,7 @@ function __makeSinkdbApiCall(querystr) {
 //   - $querystr (str): Query string to append to the POST body (which this function will add the API key to)
 // Returns: dict of results or $lib.false on failure
 function __makeLookupRequest(query) {
-    $resp = $__makeSinkdbApiCall($query)
+    $resp = $privsep.makeSinkdbApiCall($query)
 
     if ($resp and $resp.query_status = "ok") {
         return($resp.results)
@@ -48,5 +31,14 @@ function lookupFqdn(fqdn) {
 // Make a lookup against SinkDB for an email addr 
 function lookupEmail(email) {
     $query = $lib.str.format("email={email}", email=$email) 
+    return($__makeLookupRequest($query))
+}
+
+// Make an export request to SinkDB
+// Args
+//   - category (str): what category of data to export (sinkholes, awareness, or scanners)
+// Returns: dict of results or $lib.false on failure
+function exportIndicators(category) {
+    $query = $lib.str.format("export={category}", category=$category) 
     return($__makeLookupRequest($query))
 }

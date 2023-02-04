@@ -1,5 +1,5 @@
 # synapse-sinkdb
-[![Tests](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/test.yml/badge.svg)](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/test.yml)
+[![Tests](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/test.yml/badge.svg)](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/test.yml) [![Release](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/release.yml/badge.svg)](https://github.com/captainGeech42/synapse-sinkdb/actions/workflows/release.yml) [![GitHub Release](https://img.shields.io/github/release/captainGeech42/synapse-sinkdb.svg?style=flat)]()  
 
 Synapse Rapid Powerup for [SinkDB](https://sinkdb.abuse.ch/)
 
@@ -55,7 +55,7 @@ For more details, please run `help zw.sinkdb`.
 
 ### Optic
 
-If you are an enterprise customer with Optic, there is a right-click action registered for `inet:fqdn`, `inet:email`, and `inet:ipv4` nodes:
+If you are an Optic user, there is a right-click action registered for `inet:fqdn`, `inet:email`, and `inet:ipv4` nodes:
 
 ![optic screenshot of sinkdb enrichment](./optic.png)
 
@@ -68,7 +68,7 @@ This package exposes two permissions:
 
 ## Tag Tree
 
-This package creates a tag tree under `#rep.sinkdb`:
+By default, this package creates a tag tree under `#rep.sinkdb`:
 
 * `#rep.sinkdb.sinkhole`: The node is a sinkhole
 * `#rep.sinkdb.awareness`: The node is a part of a phishing awareness campaign
@@ -78,7 +78,8 @@ This package creates a tag tree under `#rep.sinkdb`:
 * `#rep.sinkdb.expose.lea`: The sinkhole is exclusively exposed to law enforcement agencies
 * `#rep.sinkdb.class.listed`: The entry is classified as "listed"
 * `#rep.sinkdb.class.query`: The entry is classified as "query-only"
-* `#rep.sinkdb.type.*`: The type of entry on SinkDB (`ipv4`, `ipv6`, `ipv4_range`, `ipv6_range`, `domain_soa`, `whois_email`, `nameserver`, `web_url`, `web_domain`, `email_from`, `sending_ipv4`, `sending_ipv4_range`, `web_ipv4`)
+* `#rep.sinkdb.type.*`: The type of entry on SinkDB (`ipv4`, `ipv6`, `ipv4_range`, `ipv6_range`, `whois_email`, `domain_soa`, `nameserver`, `web_ipv4`, `web_ipv6`, `sending_ipv4`, `sending_ipv6`, `web_url`, `web_domain`, `email_from`, `email_from_name`, `email_subject`)
+  * Please note that SinkDB entries with the type `email_from_name` or `email_subject` are modeled as `it:dev:str` nodes, since the `inet:email:message` form doesn't capture them in a standalone manner. These are only modeled when doing `zw.sinkdb.import` for awareness campaigns.
 
 The time interval on `#rep.sinkdb.sinkhole` reflects the time data exposed by SinkDB (that is, when it was added to SinkDB, through the current time when the entry was observed on SinkDB)
 
@@ -118,3 +119,9 @@ $ SYNAPSE_SINKDB_APIKEY=asdf SYNAPSE_SINKDB_DATA_PATH=sinkdb_data.json python -m
 ## TODO:
 
 * `ps:contact` modeling to track the sinkholer
+* [jsonstor caching](https://synapse.docs.vertex.link/en/latest/synapse/devguides/power-ups.html#command-option-conventions)
+* user specified tag tree root
+* sign the powerup
+
+
+

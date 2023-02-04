@@ -1,1 +1,30 @@
-init { $lib.print("doing import mock") }
+init {
+    $api = $lib.import(zw.sinkdb.api)
+    $privsep = $lib.import(zw.sinkdb.privsep)
+
+    if $cmdopts.debug { $lib.debug = $lib.true }
+    
+    if (not $cmdopts.no_awareness) {
+        $data = $api.exportIndicators(awareness)
+        if (not $data) {
+            $lib.warn("failed to get awareness data from sinkdb")
+        }
+        $privsep.modelExportResponse($data)
+    }
+
+    if (not $cmdopts.no_scanners) {
+        $data = $api.exportIndicators(scanners)
+        if (not $data) {
+            $lib.warn("failed to get scanner data from sinkdb")
+        }
+        $privsep.modelExportResponse($data)
+    }
+
+    if (not $cmdopts.no_sinkhole) {
+        $data = $api.exportIndicators(sinkholes)
+        if (not $data) {
+            $lib.warn("failed to get sinkhole data from sinkdb")
+        }
+        $privsep.modelExportResponse($data)
+    }
+}

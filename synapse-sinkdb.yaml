@@ -20,7 +20,6 @@ perms:
 
 modules:
   - name: zw.sinkdb.api
-  - name: zw.sinkdb.setup
 
   - name: zw.sinkdb.privsep
     modconf:
@@ -58,7 +57,7 @@ commands:
         - inet:ipv4
 
   - name: zw.sinkdb.import
-    descr: Import the listable indicators on SinkDB
+    descr: Import the listable indicators on SinkDB. By default, imports the sinkhole, phishing awareness, and scanner indicators.
     perms:
       - [zw, sinkdb, admin]
     forms:
@@ -67,6 +66,22 @@ commands:
         - inet:fqdn
         - inet:ipv4
         - inet:ipv6
+    cmdargs:
+      - - --no-awareness
+        - type: bool
+          default: false
+          action: store_true
+          help: Don't import the awareness indicators.
+      - - --no-scanners
+        - type: bool
+          default: false
+          action: store_true
+          help: Don't import the scanner indicators.
+      - - --no-sinkholes
+        - type: bool
+          default: false
+          action: store_true
+          help: Don't import the sinkholes indicators.
 
 optic:
   actions:

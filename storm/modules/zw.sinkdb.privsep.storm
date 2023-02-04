@@ -1,3 +1,54 @@
+// Name of the dictionary key used to store the SinkDB HTTPS API key
+$apiKeyName = "zw.sinkdb:https-apikey"
+
+// Get the SinKDB HTTPS API key
+// Args: n/a
+// Returns: str (the API key)
+function getApiKey() {
+    // see if the user has their own key set
+    $apikey = $lib.user.vars.get($apiKeyName)
+    if ($apikey) {
+        return($apikey)
+    }
+
+    // no user key, check for global
+    $apikey = $lib.globals.get($apiKeyName)
+    if ($apikey) {
+        return($apikey)
+    }
+
+    // no key in either, bail
+    $lib.exit("SinkDB HTTPS API key is not set. Use zw.sinkdb.setup.apikey to set one.")
+}
+
+// Set the SinkDB HTTPS API key
+// Args:
+//  - key (str): the API key to save
+//  - user (bool): if true, key will be stored to user vars instead of globals
+// Returns: n/a
+function setApiKey(key, user) {
+    if ($user) {
+        $lib.user.vars.set($apiKeyName, $key)
+    } else {
+        $lib.globals.set($apiKeyName, $key)
+    }
+}
+
+// Make an API call to SinkDB
+// Args
+//   - $querystr (str): Query string to append to the POST body (which this function will add the API key to)
+// Returns: prim (JSON dictionary) or $lib.false
+function makeSinkdbApiCall(querystr) {
+    $body = $lib.str.format("api_key={k}&{b}", k=$getApiKey(), b=$querystr)
+
+    $resp = $lib.inet.http.post("https://sinkdb-api.abuse.ch/api/v1/", headers=({"content-type": "application/x-www-form-urlencoded"}), body=$body)
+    if ($resp.code != 200) { return($lib.false) }
+
+    $j = $resp.json()
+
+    return($j)
+}
+
 // Get the proper meta:source node for SinkDB
 // Args: n/a
 // Returns: meta:source node
@@ -30,4 +81,33 @@ function modelLookupResponse(node, data) {
     [ <(seen)+ { yield $srcnode }]
 
     fini { return() }
+}
+
+function modelExportResponse(data) {
+    for $d in $data {
+        switch $d.type {
+            "ipv4": { [inet:ipv4=$d.indicator] | $modelLookupResponse($node, $d) | yield $node }
+            /*"ipv6": { $n = {[inet:ipv6=$d.indicator]} }
+            "ipv4_range": { $n = {[inet:ipv4=$d.indicator]} }
+            "ipv6_range": { $n = {[inet:ipv6=$d.indicator]} }
+            "domain_soa": {
+                if ($d.indicator.find("@") != $lib.null) {
+                    $n = {[inet:email=$d.indicator]}
+                } else {
+                    $n = {[inet:fqdn=$d.indicator]}
+                }
+            }
+            "whois_email": { $n = {[inet:email=$d.indicator]} }
+            "nameserver": { $n = {[inet:fqdn=$d.indicator]} }
+            "web_url": { $n = {[inet:url=$d.indicator]} }
+            "web_domain": { $n = {[inet:fqdn=$d.indicator]} }
+            "email_from": { $n = {[inet:email=$d.indicator]} }
+            "sending_ipv4": { $n = {[inet:ipv4=$d.indicator]} }
+            "sending_ipv4_range": { $n = {[inet:ipv4=$d.indicator]} }
+            "web_ipv4": { $n = {[inet:ipv4=$d.indicator]} }
+            "sending_ipv6": { $n = {[inet:ipv6=$d.indicator]} }
+            "sending_ipv6_range": { $n = {[inet:ipv6=$d.indicator]} }
+            "web_ipv6": { $n = {[inet:ipv6=$d.indicator]} }*/
+        }
+    }
 }

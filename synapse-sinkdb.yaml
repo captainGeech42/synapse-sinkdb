@@ -1,5 +1,5 @@
 name: zw-sinkdb
-version: 1.1.0
+version: 1.1.1
 synapse_minversion: [2, 117, 0]
 desc: The zw-sinkdb package provides commands to ingest and model data from SinkDB (sinkdb.abuse.ch).
 

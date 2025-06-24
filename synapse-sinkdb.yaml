@@ -1,5 +1,5 @@
 name: zw-sinkdb
-version: 1.1.0
+version: 1.1.1
 synapse_minversion: [2, 117, 0]
 desc: The zw-sinkdb package provides commands to ingest and model data from SinkDB (sinkdb.abuse.ch).
 
@@ -64,30 +64,18 @@ commands:
           default: false
           action: store_true
           help: Show verbose debug output.
-    forms:
-      input:
-        - inet:email
-        - inet:fqdn
-        - inet:ipv4
-      output:
-        - inet:email
-        - inet:fqdn
-        - inet:ipv4
+    cmdinput:
+      - form: inet:email
+        help: Lookup an email address
+      - form: inet:fqdn
+        help: Lookup a fqdn
+      - form: inet:ipv4
+        help: Lookup an IP
 
   - name: zw.sinkdb.import
     descr: Import the listable indicators on SinkDB. By default, imports the sinkhole, phishing awareness, and scanner indicators.
     perms:
       - [zw, sinkdb, admin]
-    forms:
-      output:
-        - inet:email
-        - inet:fqdn
-        - inet:ipv4
-        - inet:ipv6
-        - inet:cidr4
-        - inet:cidr6
-        - inet:url
-        - it:dev:str
     cmdargs:
       - - --asof
         - type: str
